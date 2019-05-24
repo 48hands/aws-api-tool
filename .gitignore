@@ -1,0 +1,6 @@
+aws-api-tool.exe
+aws-api-tool.iml
+
+.idea/
+.DS_Store
+.env
