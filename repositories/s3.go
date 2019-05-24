@@ -1,4 +1,4 @@
-package s3Repository
+package repositories
 
 import (
 	"aws-api-tool/models"
