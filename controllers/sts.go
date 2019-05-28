@@ -2,25 +2,34 @@ package controllers
 
 import (
 	"aws-api-tool/models"
-	"aws-api-tool/repositories"
+	"aws-api-tool/services"
 	"aws-api-tool/utils"
+	"encoding/json"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type STSController struct{}
 
-func (c STSController) CreateTemporaryURL(stsClient *sts.STS) http.HandlerFunc {
+func (c STSController) CreateTemporaryConsoleURL(stsClient *sts.STS) http.HandlerFunc {
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		federatedUserName := mux.Vars(r)["username"]
-		stsRepo := repositories.STSRepository{}
-		temporaryCredentials, err := stsRepo.GetFederationToken(stsClient, federatedUserName)
+		var federationReq models.FederationRequest
+		var error models.Error
+		s := services.STSService{}
+
+		err := json.NewDecoder(r.Body).Decode(&federationReq)
 		if err != nil {
-			var error models.Error
+			error.Message = "Error Occurred!"
+			utils.SendError(w, http.StatusBadRequest, error)
+		}
+
+		url, err := s.CreateTemporaryConsoleURL(stsClient, federationReq)
+		if err != nil {
 			error.Message = "Error Occurred!"
 			utils.SendError(w, http.StatusServiceUnavailable, error)
 		}
-		utils.SendSuccess(w, temporaryCredentials)
+
+		utils.SendSuccess(w, url)
 	}
 }
