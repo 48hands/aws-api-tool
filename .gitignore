@@ -1,6 +1,8 @@
 aws-api-tool.exe
 aws-api-tool.iml
+aws-api-tool
 
 .idea/
 .DS_Store
 .env
+,vscode/
