@@ -6,4 +6,6 @@ type FederationRequest struct {
 	Durations int    `json:"durations"`
 }
 
-type FederationResponse struct{}
+type FederationResponse struct {
+	ConsoleURL string `json:"console_url"`
+}

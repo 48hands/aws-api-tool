@@ -4,12 +4,13 @@ import (
 	"aws-api-tool/models"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sts"
 )
 
 type STSService struct{}
@@ -20,8 +21,8 @@ type awsSession struct {
 	SessionToken string `json:"sessionToken"`
 }
 
-type signinToken struct {
-	value string `json:"SigninToken"`
+type SigninToken struct {
+	Value string `json:"SigninToken"`
 }
 
 // マネジメントコンソールにログインするための一時的なURLを生成する
@@ -32,14 +33,14 @@ func (s STSService) CreateTemporaryConsoleURL(stsClient *sts.STS, federationReq 
 
 	signinToken, err := getSignInToken(stsClient, federationReq)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 		return "", err
 	}
-	return signIUnURL + "?Action=login" + "&SigninToken=" + url.QueryEscape(signinToken.value) + "&Issuser=" + url.QueryEscape(issUserURL) + "&Destination=" + url.QueryEscape(consoleURL), nil
+	return signIUnURL + "?Action=login" + "&SigninToken=" + url.QueryEscape(signinToken.Value) + "&Issuser=" + url.QueryEscape(issUserURL) + "&Destination=" + url.QueryEscape(consoleURL), nil
 }
 
 // マネジメントコンソールにサインインするためのトークンを取得する
-func getSignInToken(stsClient *sts.STS, federationReq models.FederationRequest) (*signinToken, error) {
+func getSignInToken(stsClient *sts.STS, federationReq models.FederationRequest) (*SigninToken, error) {
 
 	input := sts.AssumeRoleInput{
 		DurationSeconds: aws.Int64(int64(federationReq.Durations)),
@@ -49,17 +50,17 @@ func getSignInToken(stsClient *sts.STS, federationReq models.FederationRequest) 
 
 	output, err := stsClient.AssumeRole(&input)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	jsonByte, _ := json.Marshal(
-		awsSession{
-			SessionId:    *output.Credentials.AccessKeyId,
-			SessionKey:   *output.Credentials.SecretAccessKey,
-			SessionToken: *output.Credentials.SessionToken,
-		})
+	jsonByte, _ := json.Marshal(awsSession{
+		SessionId:    *output.Credentials.AccessKeyId,
+		SessionKey:   *output.Credentials.SecretAccessKey,
+		SessionToken: *output.Credentials.SessionToken,
+	})
 
 	siginInTokenUrl := fmt.Sprintf("https://signin.aws.amazon.com/federation?Action=getSigninToken&SessionType=json&Session=%s", url.QueryEscape(string(jsonByte)))
+
 	res, err := http.Get(siginInTokenUrl)
 
 	if err != nil {
@@ -72,7 +73,7 @@ func getSignInToken(stsClient *sts.STS, federationReq models.FederationRequest) 
 		return nil, err
 	}
 
-	var token signinToken
+	var token SigninToken
 	err = json.Unmarshal(body, &token)
 
 	if err != nil {

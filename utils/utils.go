@@ -13,6 +13,7 @@ func SendError(w http.ResponseWriter, status int, err models.Error) {
 }
 
 func SendSuccess(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "text/plain")
-	json.NewEncoder(w).Encode(data)
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(data)
 }
